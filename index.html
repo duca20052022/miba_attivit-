@@ -786,6 +786,12 @@ function closeModal(){document.getElementById('overlay').classList.remove('open'
 
 async function delA(id){
   const a=acts.find(x=>x.id===id);
+  const pwd=prompt('Inserisci la password per eliminare:');
+  if(pwd===null)return;
+  if(pwd!=='MIBA2026'){
+    toast('⚠ Password errata — eliminazione non autorizzata');
+    return;
+  }
   if(confirm('Eliminare "'+a.desc.slice(0,50)+'"?')){
     acts=acts.filter(x=>x.id!==id);
     render(); renderGantt(); await saveData(); toast('Attività eliminata');
