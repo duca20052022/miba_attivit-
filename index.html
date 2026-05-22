@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard Monitoraggio Attività</title>
+<title>Dashboard Monitoraggio Attività — MIBA</title>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -171,7 +171,6 @@
 
 <main class="main">
   <div class="stats-row" id="stats-row"></div>
-
   <div class="toolbar">
     <span class="flbl">Filtra:</span>
     <input type="text" id="fSearch" placeholder="🔍 Cerca..." oninput="render()">
@@ -259,7 +258,7 @@
       <div class="fg">
         <div style="grid-column:1/-1;display:flex;flex-direction:column">
           <label>Descrizione attività <span class="req">*</span></label>
-          <input type="text" id="f-desc" placeholder="Es. Preventivo cliente Rossi, Revisione distinta base...">
+          <input type="text" id="f-desc" placeholder="Es. Preventivo cliente Rossi...">
         </div>
         <div style="display:flex;flex-direction:column">
           <label>Data richiesta <span class="req">*</span></label>
@@ -279,7 +278,7 @@
         </div>
         <div style="display:flex;flex-direction:column">
           <label>Ricevente</label>
-          <input type="text" id="f-rice" placeholder="Es. Anna Bianchi, Ufficio Acquisti...">
+          <input type="text" id="f-rice" placeholder="Es. Anna Bianchi...">
         </div>
         <div style="display:flex;flex-direction:column">
           <label>Email ricevente</label>
@@ -319,7 +318,7 @@
             </div>
             <div style="display:flex;flex-direction:column">
               <label>Motivazione spostamento</label>
-              <input type="text" id="f-mot" placeholder="Es. Attesa materiali, Cliente ha posticipato...">
+              <input type="text" id="f-mot" placeholder="Es. Attesa materiali...">
             </div>
           </div>
           <div id="storico-modal" style="display:none;margin-top:12px">
@@ -360,14 +359,16 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// ─── CONFIGURAZIONE ───────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════
+// CONFIGURAZIONE
+// ═══════════════════════════════════════════════════════
 const EMAILJS_PUBLIC_KEY = 'vTTgfQt-mseNz7hUs';
 const EMAILJS_SERVICE_ID = 'service_dbg3aha';
 const EMAILJS_TEMPLATE   = 'template_3hnryds';
-const BIN_ID  = '69fee643250b1311c3255eff';
-const API_KEY = '$2a$10$yJ9iJiHlow8bKsRIKl/xIejVQM6itsxSQ6f.j7atu7zca9RTeRKsK';
-const DELETE_PASSWORD = 'MIBA2026';
-// ─────────────────────────────────────────────────────────────────────────────
+const BIN_ID             = '69fee643250b1311c3255eff';
+const API_KEY            = '$2a$10$yJ9iJiHlow8bKsRIKl/xIejVQM6itsxSQ6f.j7atu7zca9RTeRKsK';
+const DELETE_PASSWORD    = 'MIBA2026';
+// ═══════════════════════════════════════════════════════
 
 const API_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 let acts=[], nid=1, eid=null, rifId=null;
@@ -381,19 +382,19 @@ function getISOWeek(d){
   return 1+Math.round(((date.getTime()-w1.getTime())/86400000-3+(w1.getDay()+6)%7)/7);
 }
 
-// ── EMAIL ─────────────────────────────────────────────────────────────────────
+// ── EMAIL UNIVERSALE ──────────────────────────────────────────────────────────
 async function sendWorkflowEmail({to, subject, html}){
   if(!to) return false;
   try{
     await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE, {
-      email_to: to,
-      subject:  subject,
+      email_to:     to,
+      subject:      subject,
       html_content: html
     });
     return true;
   }catch(e){
     console.error('EmailJS error:',e);
-    toast('⚠ Errore invio email');
+    toast('⚠ Errore invio email — controlla la console');
     return false;
   }
 }
@@ -401,24 +402,25 @@ async function sendWorkflowEmail({to, subject, html}){
 function buildEmail({title, message, color='#2563eb', rows=[], footer=''}){
   const rowsHtml=rows.map(r=>`
     <tr>
-      <td style="padding:6px 0;font-size:13px;color:#6b7280;width:120px">${r.label}</td>
-      <td style="padding:6px 0;font-size:13px;color:#0f172a;font-weight:600">${r.value}</td>
+      <td style="padding:7px 0;font-size:13px;color:#6b7280;width:130px;vertical-align:top">${r.label}</td>
+      <td style="padding:7px 0;font-size:13px;color:#0f172a;font-weight:600">${r.value}</td>
     </tr>`).join('');
   return`<div style="font-family:Arial,sans-serif;padding:24px;background:#f4f5f7">
-    <div style="max-width:600px;margin:auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb">
-      <div style="background:${color};color:#fff;padding:18px 24px;font-size:18px;font-weight:700">${title}</div>
+    <div style="max-width:600px;margin:auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 4px 16px rgba(0,0,0,.08)">
+      <div style="background:${color};color:#fff;padding:20px 24px;font-size:18px;font-weight:700;letter-spacing:-.3px">${title}</div>
       <div style="padding:24px">
         <p style="font-size:14px;color:#374151;line-height:1.6;margin-bottom:20px">${message}</p>
-        <table style="width:100%;border-collapse:collapse;background:#f9fafb;border-radius:8px;padding:16px;border-left:4px solid ${color}">
-          ${rowsHtml}
+        <table style="width:100%;border-collapse:collapse;background:#f9fafb;border-radius:8px;padding:16px;border-left:4px solid ${color};margin-bottom:16px">
+          <tbody style="padding:12px">${rowsHtml}</tbody>
         </table>
-        ${footer?`<div style="margin-top:16px;font-size:12px;color:#6b7280;padding:12px;background:#f9fafb;border-radius:8px">${footer}</div>`:''}
-        <div style="margin-top:24px;padding:14px;background:#eff6ff;border-radius:8px;font-size:13px;color:#1d4ed8">
-          <strong>Azione richiesta:</strong> Apri la dashboard e gestisci l'attività.
+        ${footer?`<div style="margin-bottom:16px;padding:12px 16px;border-radius:8px;font-size:13px">${footer}</div>`:''}
+        <div style="padding:14px 16px;background:#eff6ff;border-radius:8px;font-size:13px;color:#1d4ed8;border-left:3px solid #2563eb">
+          <strong>Azione richiesta:</strong> Apri la dashboard e gestisci l'attività al seguente link:<br>
+          <a href="https://duca20052022.github.io/miba_attivit-/" style="color:#2563eb;font-weight:600">Dashboard MIBA →</a>
         </div>
       </div>
-      <div style="padding:14px 24px;background:#f8fafc;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af;text-align:center">
-        Dashboard Monitoraggio Attività — MIBA S.r.l.
+      <div style="padding:12px 24px;background:#f8fafc;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af;text-align:center">
+        Dashboard Monitoraggio Attività — MIBA S.r.l. — Messaggio automatico
       </div>
     </div>
   </div>`;
@@ -428,19 +430,19 @@ async function emailAssegnazione(a){
   if(!a.emailRicevente) return;
   const html=buildEmail({
     title:'📋 Nuova attività assegnata',
-    message:`Buongiorno ${a.rice||''},<br>ti è stata assegnata una nuova attività che richiede la tua <strong>accettazione</strong>.`,
+    message:`Buongiorno <strong>${a.rice||''}</strong>,<br>ti è stata assegnata una nuova attività che richiede la tua <strong>accettazione o rifiuto</strong>.`,
     color:'#2563eb',
     rows:[
-      {label:'Attività',value:a.desc},
-      {label:'Mandante',value:a.mand||'—'},
-      {label:'Scadenza',value:fd(a.des)},
-      {label:'Priorità',value:a.prio},
-    ],
-    footer:a.note?`Note: ${a.note}`:''
+      {label:'Attività',   value:a.desc},
+      {label:'Mandante',   value:a.mand||'—'},
+      {label:'Scadenza',   value:fd(a.des)},
+      {label:'Priorità',   value:a.prio},
+      {label:'Note',       value:a.note||'—'}
+    ]
   });
   const ok=await sendWorkflowEmail({
-    to:a.emailRicevente,
-    subject:`[Nuova attività] ${a.desc} — Priorità ${a.prio}`,
+    to:      a.emailRicevente,
+    subject: `[Nuova attività] ${a.desc} — Priorità ${a.prio}`,
     html
   });
   if(ok){
@@ -455,26 +457,26 @@ async function emailSpostamento(a, vecchiaData, nuovaData, motivo){
   const isOltre24=msFromAcc!==null&&msFromAcc>86400000;
   const color=isOltre24?'#ea580c':'#7c3aed';
   const alertBanner=isOltre24
-    ?`<div style="margin-top:16px;padding:12px;background:#fff7ed;border-radius:8px;border-left:4px solid #ea580c;font-size:13px;color:#c2410c"><strong>🟠 Attenzione:</strong> Spostamento registrato oltre 24h dall'accettazione.</div>`
-    :`<div style="margin-top:16px;padding:12px;background:#f5f3ff;border-radius:8px;border-left:4px solid #7c3aed;font-size:13px;color:#7c3aed"><strong>⚡ Info:</strong> Spostamento registrato entro 24h dall'accettazione.</div>`;
+    ?`<div style="padding:12px 16px;background:#fff7ed;border-radius:8px;border-left:3px solid #ea580c;font-size:13px;color:#c2410c"><strong>🟠 Attenzione:</strong> Spostamento registrato <strong>oltre 24h</strong> dall'accettazione.</div>`
+    :`<div style="padding:12px 16px;background:#f5f3ff;border-radius:8px;border-left:3px solid #7c3aed;font-size:13px;color:#7c3aed"><strong>⚡ Info:</strong> Spostamento registrato <strong>entro 24h</strong> dall'accettazione.</div>`;
 
   // Email al ricevente
   if(a.emailRicevente){
     const html=buildEmail({
-      title:'📅 Attività spostata',
-      message:`Buongiorno ${a.rice||''},<br>la scadenza dell'attività assegnata è stata <strong>modificata</strong>.`,
+      title:'📅 Scadenza attività modificata',
+      message:`Buongiorno <strong>${a.rice||''}</strong>,<br>la scadenza dell'attività che ti è stata assegnata è stata <strong>modificata</strong>.`,
       color,
       rows:[
-        {label:'Attività',value:a.desc},
-        {label:'Data precedente',value:fd(vecchiaData)},
-        {label:'Nuova scadenza',value:fd(nuovaData)},
-        {label:'Motivo',value:motivo||'Non specificato'},
+        {label:'Attività',        value:a.desc},
+        {label:'Data precedente', value:fd(vecchiaData)},
+        {label:'Nuova scadenza',  value:fd(nuovaData)},
+        {label:'Motivo',          value:motivo||'Non specificato'}
       ],
       footer:alertBanner
     });
     const ok=await sendWorkflowEmail({
-      to:a.emailRicevente,
-      subject:`[Attività spostata] ${a.desc} — nuova scadenza ${fd(nuovaData)}`,
+      to:      a.emailRicevente,
+      subject: `[Attività spostata] ${a.desc} — nuova scadenza ${fd(nuovaData)}`,
       html
     });
     if(ok){
@@ -486,56 +488,27 @@ async function emailSpostamento(a, vecchiaData, nuovaData, motivo){
   // Email al mandante
   if(a.emailMandante){
     const html=buildEmail({
-      title:'📅 Attività che hai assegnato è stata spostata',
-      message:`Buongiorno ${a.mand||''},<br>l'attività che hai assegnato ha una nuova scadenza.`,
+      title:'📅 Attività assegnata spostata',
+      message:`Buongiorno <strong>${a.mand||''}</strong>,<br>l'attività che hai assegnato ha una <strong>nuova scadenza</strong>.`,
       color,
       rows:[
-        {label:'Attività',value:a.desc},
-        {label:'Ricevente',value:a.rice||'—'},
-        {label:'Data precedente',value:fd(vecchiaData)},
-        {label:'Nuova scadenza',value:fd(nuovaData)},
-        {label:'Motivo',value:motivo||'Non specificato'},
+        {label:'Attività',        value:a.desc},
+        {label:'Ricevente',       value:a.rice||'—'},
+        {label:'Data precedente', value:fd(vecchiaData)},
+        {label:'Nuova scadenza',  value:fd(nuovaData)},
+        {label:'Motivo',          value:motivo||'Non specificato'}
       ],
       footer:alertBanner
     });
     await sendWorkflowEmail({
-      to:a.emailMandante,
-      subject:`[Notifica spostamento] ${a.desc} — nuova scadenza ${fd(nuovaData)}`,
+      to:      a.emailMandante,
+      subject: `[Notifica spostamento] ${a.desc} — nuova scadenza ${fd(nuovaData)}`,
       html
     });
   }
 
   if(a.emailRicevente||a.emailMandante){
-    toast('📧 Notifiche spostamento inviate'+(isOltre24?' 🟠 oltre 24h':''));
-  }
-}
-  if(a.emailRicevente){
-    const ok = await sendEmail(EMAILJS_TPL_SPOSTAMENTO,{
-      email_to:     a.emailRicevente,
-      ricevente:    a.rice||a.emailRicevente,
-      titolo:       a.desc,
-      vecchia_data: fd(vecchiaData),
-      nuova_data:   fd(nuovaData),
-      motivo:       motivo||'Non specificato'
-    });
-    if(ok){
-      a.emailLog=a.emailLog||[];
-      a.emailLog.push({tipo:'spostamento',ts:Date.now(),da:vecchiaData,a:nuovaData});
-    }
-  }
-  // Email al mandante
-  if(a.emailMandante){
-    await sendEmail(EMAILJS_TPL_SPOSTAMENTO,{
-      email_to:     a.emailMandante,
-      ricevente:    a.mand||a.emailMandante,
-      titolo:       a.desc,
-      vecchia_data: fd(vecchiaData),
-      nuova_data:   fd(nuovaData),
-      motivo:       motivo||'Non specificato'
-    });
-    toast('📧 Notifica spostamento inviata a mandante e ricevente');
-  } else if(a.emailRicevente){
-    toast('📧 Email spostamento inviata a '+a.emailRicevente);
+    toast('📧 Notifiche spostamento inviate'+(isOltre24?' 🟠':''));
   }
 }
 
@@ -590,11 +563,11 @@ function fs(s){if(!s)return'—';const[y,m,g]=s.split('-');return g+'/'+m+'/'+y.
 function iso(){return today.toISOString().slice(0,10);}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function fmtTs(ts){if(!ts)return'—';const d=new Date(ts);return d.toLocaleDateString('it-IT')+' '+d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});}
-function fmtDuration(ms){
-  const h=Math.floor(Math.abs(ms)/3600000);
-  const m=Math.floor((Math.abs(ms)%3600000)/60000);
+function fmtDur(ms){
   const g=Math.floor(Math.abs(ms)/86400000);
-  if(g>=1)return`${g}gg ${h%24}h`;
+  const h=Math.floor((Math.abs(ms)%86400000)/3600000);
+  const m=Math.floor((Math.abs(ms)%3600000)/60000);
+  if(g>=1)return`${g}gg ${h}h`;
   return`${h}h ${m}m`;
 }
 
@@ -605,10 +578,14 @@ function delta(a){
   return diff(today,pdt(ref));
 }
 
-// ── KPI LOGIC ─────────────────────────────────────────────────────────────────
+// ── KPI ───────────────────────────────────────────────────────────────────────
 function hasOltre24h(a){
   if(!a.dataAccettazione||!a.storico||!a.storico.length) return false;
   return a.storico.some(s=>s.ts-a.dataAccettazione>86400000);
+}
+function hasEntro24h(a){
+  if(!a.dataAccettazione||!a.storico||!a.storico.length) return false;
+  return a.storico.some(s=>s.ts-a.dataAccettazione>0&&s.ts-a.dataAccettazione<=86400000);
 }
 function hasAlert24h(a){
   if(!a.dataImmissione||!a.storico||!a.storico.length) return false;
@@ -623,53 +600,28 @@ function kpiLabel(s,a){
   if(!a.dataAccettazione) return '';
   const ms=s.ts-a.dataAccettazione;
   if(ms>86400000) return ' 🟠 oltre 24h';
-  if(ms>=0){
-    const ref=pdt(a.nd||a.des);
-    if(ref&&today>ref) return ' ⚡ <24h+ritardo';
-    return ' ✅ <24h+puntuale';
-  }
+  if(ms>=0){const ref=pdt(a.nd||a.des);if(ref&&today>ref)return ' ⚡ <24h+ritardo';return ' ✅ <24h+puntuale';}
   return '';
 }
-
-// Calcola info ultimo spostamento per card stats
 function getUltimoSpostamento(){
   const spostati=acts.filter(a=>a.storico&&a.storico.length);
   if(!spostati.length) return null;
-  let ultimoAct=null, ultimoShift=null;
-  for(const a of spostati){
-    const s=a.storico[a.storico.length-1];
-    if(!ultimoShift||s.ts>ultimoShift.ts){ultimoShift=s;ultimoAct=a;}
-  }
-  if(!ultimoAct||!ultimoShift) return null;
-  const msFromAcc=ultimoAct.dataAccettazione?ultimoShift.ts-ultimoAct.dataAccettazione:null;
-  const msFromImm=ultimoAct.dataImmissione?ultimoShift.ts-ultimoAct.dataImmissione:null;
-  return{act:ultimoAct,shift:ultimoShift,msFromAcc,msFromImm};
+  let uAct=null,uShift=null;
+  for(const a of spostati){const s=a.storico[a.storico.length-1];if(!uShift||s.ts>uShift.ts){uShift=s;uAct=a;}}
+  if(!uAct||!uShift) return null;
+  const msFromAcc=uAct.dataAccettazione?uShift.ts-uAct.dataAccettazione:null;
+  return{act:uAct,shift:uShift,msFromAcc};
 }
 
 // ── PROGRESS ──────────────────────────────────────────────────────────────────
-function pctClass(p){
-  if(p>=70)return{fill:'fill-green',pct:'pct-green'};
-  if(p>=30)return{fill:'fill-amber',pct:'pct-amber'};
-  return{fill:'fill-red',pct:'pct-red'};
-}
-function renderProgress(p){
-  const v=parseInt(p)||0,c=pctClass(v);
-  return`<div class="prog-wrap"><div class="prog-bar-bg"><div class="prog-bar-fill ${c.fill}" style="width:${v}%"></div></div><span class="prog-pct ${c.pct}">${v}%</span></div>`;
-}
-function updatePctLabel(){
-  const v=document.getElementById('f-pct').value;
-  document.getElementById('pct-label').textContent=v+'%';
-  document.getElementById('pct-display').textContent=v+'%';
-}
-function onStatoChange(){
-  if(document.getElementById('f-stato').value==='Completata'){
-    document.getElementById('f-pct').value=100; updatePctLabel();
-  }
-}
+function pctClass(p){if(p>=70)return{fill:'fill-green',pct:'pct-green'};if(p>=30)return{fill:'fill-amber',pct:'pct-amber'};return{fill:'fill-red',pct:'pct-red'};}
+function renderProgress(p){const v=parseInt(p)||0,c=pctClass(v);return`<div class="prog-wrap"><div class="prog-bar-bg"><div class="prog-bar-fill ${c.fill}" style="width:${v}%"></div></div><span class="prog-pct ${c.pct}">${v}%</span></div>`;}
+function updatePctLabel(){const v=document.getElementById('f-pct').value;document.getElementById('pct-label').textContent=v+'%';document.getElementById('pct-display').textContent=v+'%';}
+function onStatoChange(){if(document.getElementById('f-stato').value==='Completata'){document.getElementById('f-pct').value=100;updatePctLabel();}}
 
 // ── RENDER HELPERS ─────────────────────────────────────────────────────────────
 function renderDelta(a){
-  const d=delta(a); if(d===null) return'<span style="color:#9ca3af;font-size:11px">—</span>';
+  const d=delta(a);if(d===null)return'<span style="color:#9ca3af;font-size:11px">—</span>';
   if(a.stato==='Completata'){
     if(d===0)return'<div class="dw"><div class="dot dot-ok2"></div><span class="dok">In tempo</span></div>';
     if(d>0)return`<div class="dw"><div class="dot dot-d"></div><span class="ddanger">+${d}gg ritardo</span></div>`;
@@ -679,10 +631,7 @@ function renderDelta(a){
   if(d>0)return`<div class="dw"><div class="dot dot-ok2"></div><span class="dok">${d}gg rimasti</span></div>`;
   return`<div class="dw"><div class="dot dot-d"></div><span class="ddanger">${Math.abs(d)}gg ritardo</span></div>`;
 }
-function sb(s){
-  const m={'Da accettare':'b-da-acc','In corso':'b-in-corso','Completata':'b-completata','Attesa':'b-attesa','Spostata':'b-spostata','Rifiutata':'b-rifiutata'};
-  return`<span class="badge ${m[s]||''}">${s}</span>`;
-}
+function sb(s){const m={'Da accettare':'b-da-acc','In corso':'b-in-corso','Completata':'b-completata','Attesa':'b-attesa','Spostata':'b-spostata','Rifiutata':'b-rifiutata'};return`<span class="badge ${m[s]||''}">${s}</span>`;}
 function pb(p){const m={'Alta':'b-alta','Media':'b-media','Bassa':'b-bassa'};return`<span class="badge ${m[p]||''}">${p}</span>`;}
 
 // ── STATS ──────────────────────────────────────────────────────────────────────
@@ -693,33 +642,21 @@ function renderStats(){
     ir=acts.filter(a=>{const d=delta(a);return d!==null&&d<0;}).length,
     co=acts.filter(a=>a.stato==='Completata').length,
     rif=acts.filter(a=>a.stato==='Rifiutata').length,
-    kpi=acts.filter(a=>hasOltre24h(a)).length,
-    alrt=acts.filter(a=>hasAlert24h(a)).length,
+    entro24=acts.filter(a=>hasEntro24h(a)).length,
+    oltre24=acts.filter(a=>hasOltre24h(a)).length,
     attivi=acts.filter(a=>a.stato!=='Rifiutata'),
     avgPct=attivi.length?Math.round(attivi.reduce((s,a)=>s+(parseInt(a.pct)||0),0)/attivi.length):0;
 
-  // Card ultimo spostamento
   const us=getUltimoSpostamento();
   let spostCard='';
   if(us){
     const ms=us.msFromAcc;
     let label,col,vcol;
-    if(ms===null){
-      label='Non ancora accettata';col='acc-gray';vcol='#9ca3af';
-    }else if(ms<=0){
-      label='Pre-accettazione';col='acc-gray';vcol='#9ca3af';
-    }else if(ms<86400000){
-      label=`⚡ Entro 24h<br><small style="font-weight:400">${fmtDuration(ms)}</small>`;
-      col='acc-amber';vcol='#d97706';
-    }else{
-      label=`🟠 Oltre 24h<br><small style="font-weight:400">${fmtDuration(ms)}</small>`;
-      col='acc-orange';vcol='#ea580c';
-    }
-    spostCard=`<div class="stat-card ${col}">
-      <div class="lbl">Ultimo spostamento</div>
-      <div class="val" style="font-size:13px;font-weight:700;color:${vcol};line-height:1.4">${label}</div>
-      <div class="sub">${esc(us.act.desc.slice(0,22))}</div>
-    </div>`;
+    if(ms===null){label='Non ancora accettata';col='acc-gray';vcol='#9ca3af';}
+    else if(ms<=0){label='Pre-accettazione';col='acc-gray';vcol='#9ca3af';}
+    else if(ms<86400000){label=`⚡ Entro 24h<br><small style="font-weight:400;font-size:11px">${fmtDur(ms)}</small>`;col='acc-amber';vcol='#d97706';}
+    else{label=`🟠 Oltre 24h<br><small style="font-weight:400;font-size:11px">${fmtDur(ms)}</small>`;col='acc-orange';vcol='#ea580c';}
+    spostCard=`<div class="stat-card ${col}"><div class="lbl">Ultimo spostamento</div><div class="val" style="font-size:13px;font-weight:700;color:${vcol};line-height:1.5">${label}</div><div class="sub">${esc(us.act.desc.slice(0,22))}</div></div>`;
   }
 
   document.getElementById('stats-row').innerHTML=`
@@ -729,8 +666,8 @@ function renderStats(){
     <div class="stat-card acc-red"><div class="lbl">In ritardo</div><div class="val v-red">${ir}</div><div class="sub">oltre scadenza</div></div>
     <div class="stat-card acc-green"><div class="lbl">Completate</div><div class="val v-green">${co}</div><div class="sub">chiuse</div></div>
     <div class="stat-card acc-rose"><div class="lbl">Rifiutate</div><div class="val v-rose">${rif}</div><div class="sub">non accettate</div></div>
-    <div class="stat-card acc-amber"><div class="lbl">Entro 24 ore</div><div class="val v-amber">${acts.filter(a=>a.storico&&a.storico.length&&a.dataAccettazione&&a.storico.some(s=>s.ts-a.dataAccettazione>0&&s.ts-a.dataAccettazione<=86400000)).length}</div><div class="sub">spostate in tempo</div></div>
-    <div class="stat-card acc-orange"><div class="lbl">Oltre 24 ore</div><div class="val v-orange">${kpi}</div><div class="sub">spostate in ritardo</div></div>
+    <div class="stat-card acc-amber"><div class="lbl">Entro 24 ore</div><div class="val v-amber">${entro24}</div><div class="sub">spostate in tempo</div></div>
+    <div class="stat-card acc-orange"><div class="lbl">Oltre 24 ore</div><div class="val v-orange">${oltre24}</div><div class="sub">spostate in ritardo</div></div>
     <div class="stat-card acc-blue"><div class="lbl">Avanz. medio</div><div class="val v-blue">${avgPct}%</div><div class="sub">attività attive</div></div>
     ${spostCard}`;
 
@@ -745,7 +682,7 @@ function render(){
     fD=document.getElementById('fDelta').value,fK=document.getElementById('fKPI').value;
   let list=acts.filter(a=>{
     if(s&&!a.desc.toLowerCase().includes(s)&&!(a.mand||'').toLowerCase().includes(s)&&!(a.rice||'').toLowerCase().includes(s)&&!a.note.toLowerCase().includes(s))return false;
-    if(fS&&a.stato!==fS)return false; if(fP&&a.prio!==fP)return false;
+    if(fS&&a.stato!==fS)return false;if(fP&&a.prio!==fP)return false;
     if(fD){const d=delta(a);
       if(fD==='ritardo'&&!(d!==null&&d<0))return false;
       if(fD==='anticipo'&&!(d!==null&&d>0))return false;
@@ -756,26 +693,20 @@ function render(){
   });
   list.sort((a,b)=>{
     const po={Alta:0,Media:1,Bassa:2},da=delta(a)??999,db=delta(b)??999;
-    if(a.stato==='Rifiutata'&&b.stato!=='Rifiutata')return 1;
-    if(b.stato==='Rifiutata'&&a.stato!=='Rifiutata')return -1;
-    if(a.stato==='Completata'&&b.stato!=='Completata')return 1;
-    if(b.stato==='Completata'&&a.stato!=='Completata')return -1;
-    if(a.stato==='Da accettare'&&b.stato!=='Da accettare')return -1;
-    if(b.stato==='Da accettare'&&a.stato!=='Da accettare')return 1;
-    if(da<0&&db>=0)return -1; if(db<0&&da>=0)return 1;
+    if(a.stato==='Rifiutata'&&b.stato!=='Rifiutata')return 1;if(b.stato==='Rifiutata'&&a.stato!=='Rifiutata')return -1;
+    if(a.stato==='Completata'&&b.stato!=='Completata')return 1;if(b.stato==='Completata'&&a.stato!=='Completata')return -1;
+    if(a.stato==='Da accettare'&&b.stato!=='Da accettare')return -1;if(b.stato==='Da accettare'&&a.stato!=='Da accettare')return 1;
+    if(da<0&&db>=0)return -1;if(db<0&&da>=0)return 1;
     return po[a.prio]-po[b.prio]||da-db;
   });
   document.getElementById('cnt').textContent=`${list.length} di ${acts.length} attività`;
   const tb=document.getElementById('tbody'),em=document.getElementById('empty-st');
   if(!list.length){tb.innerHTML='';em.style.display='block';renderStats();return;}
   em.style.display='none';
-
   tb.innerHTML=list.map(a=>{
-    const isRif=a.stato==='Rifiutata', isDaAcc=a.stato==='Da accettare';
-    const kpiFlag=hasOltre24h(a), alertFlag=hasAlert24h(a);
-    const emailLog=a.emailLog||[];
-    const lastEmail=emailLog.length?emailLog[emailLog.length-1]:null;
-
+    const isRif=a.stato==='Rifiutata',isDaAcc=a.stato==='Da accettare';
+    const kpiFlag=hasOltre24h(a),alertFlag=hasAlert24h(a);
+    const lastEmail=(a.emailLog||[]).length?(a.emailLog||[])[a.emailLog.length-1]:null;
     const noteLines=[
       a.note?`<div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(a.note)}">${esc(a.note.length>26?a.note.slice(0,26)+'…':a.note)}</div>`:'',
       a.mot&&!isRif?`<div class="nsposta" title="${esc(a.mot)}">${esc(a.mot.length>22?a.mot.slice(0,22)+'…':a.mot)}</div>`:'',
@@ -784,17 +715,11 @@ function render(){
       alertFlag?`<div class="alert24-tag">⚡ &lt;24h+ritardo</div>`:'',
       lastEmail?`<div class="email-sent">✉ ${lastEmail.tipo} ${fmtTs(lastEmail.ts).split(' ')[0]}</div>`:''
     ].filter(Boolean).join('');
-
     const rs=(()=>{
-      if(isRif)return'background:#fff8f8;opacity:.8';
-      if(isDaAcc)return'background:#fffef0';
-      if(kpiFlag)return'background:#fff7f0';
-      const d=delta(a);
-      if(d!==null&&d<0)return'background:#fffbfb';
-      if(d===0)return'background:#fffef0';
-      return'';
+      if(isRif)return'background:#fff8f8;opacity:.8';if(isDaAcc)return'background:#fffef0';
+      if(kpiFlag)return'background:#fff7f0';const d=delta(a);
+      if(d!==null&&d<0)return'background:#fffbfb';if(d===0)return'background:#fffef0';return'';
     })();
-
     return`<tr style="${rs}">
       <td style="font-weight:500;max-width:170px">
         <div title="${esc(a.desc)}">${esc(a.desc.length>30?a.desc.slice(0,30)+'…':a.desc)}</div>
@@ -807,24 +732,14 @@ function render(){
       <td style="white-space:nowrap;font-size:11px;color:${a.nd?'#7c3aed':'#d1d5db'};font-weight:${a.nd?'600':'400'}">${a.nd?fd(a.nd):'—'}</td>
       <td style="font-size:11px;color:#374151;font-weight:500">${esc(a.mand||'—')}</td>
       <td style="font-size:11px;color:#374151">${esc(a.rice||'—')}</td>
-      <td>${sb(a.stato)}</td>
-      <td>${pb(a.prio)}</td>
-      <td>${renderDelta(a)}</td>
+      <td>${sb(a.stato)}</td><td>${pb(a.prio)}</td><td>${renderDelta(a)}</td>
       <td>${isRif||isDaAcc?'<span style="color:#d1d5db;font-size:11px">—</span>':renderProgress(a.pct||0)}</td>
       <td class="ncell">${noteLines||'<span style="color:#d1d5db">—</span>'}</td>
       <td><div class="acts">
-        ${isDaAcc?`<button class="abtn acc" onclick="accettaA(${a.id})" title="Accetta">
-          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-        </button>`:''}
-        <button class="abtn" onclick="editA(${a.id})" title="Modifica">
-          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-        </button>
-        ${!isRif?`<button class="abtn rif" onclick="openRifModal(${a.id})" title="Rifiuta">
-          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-        </button>`:''}
-        <button class="abtn del" onclick="delA(${a.id})" title="Elimina">
-          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
-        </button>
+        ${isDaAcc?`<button class="abtn acc" onclick="accettaA(${a.id})" title="Accetta"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></button>`:''}
+        <button class="abtn" onclick="editA(${a.id})" title="Modifica"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+        ${!isRif?`<button class="abtn rif" onclick="openRifModal(${a.id})" title="Rifiuta"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></button>`:''}
+        <button class="abtn del" onclick="delA(${a.id})" title="Elimina"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>
       </div></td>
     </tr>`;
   }).join('');
@@ -884,15 +799,13 @@ function renderGantt(){
 
 // ── ACCETTA ───────────────────────────────────────────────────────────────────
 async function accettaA(id){
-  const a=acts.find(x=>x.id===id); if(!a) return;
-  a.stato='In corso';
-  a.dataAccettazione=Date.now();
-  render(); renderGantt();
-  await saveData();
+  const a=acts.find(x=>x.id===id);if(!a)return;
+  a.stato='In corso';a.dataAccettazione=Date.now();
+  render();renderGantt();await saveData();
   toast('✅ Attività accettata');
 }
 
-// ── MODAL ATTIVITÀ ────────────────────────────────────────────────────────────
+// ── MODAL ─────────────────────────────────────────────────────────────────────
 function openModal(id){
   eid=id||null;
   document.getElementById('mtitle').textContent=id?'Modifica attività':'Nuova attività';
@@ -917,17 +830,14 @@ function openModal(id){
     if(a.dataImmissione){
       infoEl.style.display='flex';
       let txt='Inserita il '+fmtTs(a.dataImmissione);
-      if(a.dataAccettazione) txt+=' · Accettata il '+fmtTs(a.dataAccettazione);
+      if(a.dataAccettazione)txt+=' · Accettata il '+fmtTs(a.dataAccettazione);
       document.getElementById('modal-imm-text').textContent=txt;
     }else{infoEl.style.display='none';}
     if(a.storico&&a.storico.length){
       storicoModal.style.display='block';
       document.getElementById('storico-box-content').innerHTML=a.storico.map(s=>{
         const lbl=kpiLabel(s,a);
-        return`<div class="storico-row">
-          <span class="storico-ts">${fmtTs(s.ts)}</span>
-          <span class="storico-detail">${fd(s.vecchia)} → <strong>${fd(s.nuova)}</strong>${s.motivo?' · '+esc(s.motivo):''}<span class="storico-kpi">${lbl}</span></span>
-        </div>`;
+        return`<div class="storico-row"><span class="storico-ts">${fmtTs(s.ts)}</span><span class="storico-detail">${fd(s.vecchia)} → <strong>${fd(s.nuova)}</strong>${s.motivo?' · '+esc(s.motivo):''}<span class="storico-kpi">${lbl}</span></span></div>`;
       }).join('');
     }else{storicoModal.style.display='none';}
   }else{
@@ -950,46 +860,33 @@ function closeModal(){document.getElementById('overlay').classList.remove('open'
 async function delA(id){
   const a=acts.find(x=>x.id===id);
   const pwd=prompt('Inserisci la password per eliminare:');
-  if(pwd===null) return;
-  if(pwd!==DELETE_PASSWORD){
-    toast('⚠ Password errata — eliminazione non autorizzata');
-    return;
-  }
+  if(pwd===null)return;
+  if(pwd!==DELETE_PASSWORD){toast('⚠ Password errata — eliminazione non autorizzata');return;}
   if(confirm('Eliminare "'+a.desc.slice(0,50)+'"?')){
     acts=acts.filter(x=>x.id!==id);
-    render(); renderGantt(); await saveData(); toast('Attività eliminata');
+    render();renderGantt();await saveData();toast('Attività eliminata');
   }
 }
 
 async function save(){
   const desc=document.getElementById('f-desc').value.trim(),
-    ric=document.getElementById('f-ric').value,
-    des=document.getElementById('f-des').value;
+    ric=document.getElementById('f-ric').value,des=document.getElementById('f-des').value;
   if(!desc){alert('Inserisci la descrizione');return;}
   if(!ric){alert('Inserisci la data di richiesta');return;}
   if(!des){alert('Inserisci la data desiderata');return;}
-
   const nuovaND=document.getElementById('f-nd').value;
   const nuovoMot=document.getElementById('f-mot').value.trim();
   const now=Date.now();
   const isNew=!eid;
   let storico=[],dataImmissione=now,dataAccettazione=null,emailLog=[],vecchiaND='';
-
   if(eid){
     const prev=acts.find(a=>a.id===eid);
-    storico=[...(prev.storico||[])];
-    dataImmissione=prev.dataImmissione||now;
-    dataAccettazione=prev.dataAccettazione||null;
-    emailLog=[...(prev.emailLog||[])];
+    storico=[...(prev.storico||[])];dataImmissione=prev.dataImmissione||now;
+    dataAccettazione=prev.dataAccettazione||null;emailLog=[...(prev.emailLog||[])];
     vecchiaND=prev.nd||prev.des;
-    if(nuovaND&&nuovaND!==vecchiaND){
-      storico.push({ts:now,vecchia:vecchiaND,nuova:nuovaND,motivo:nuovoMot});
-    }
-    if(!prev.dataAccettazione&&document.getElementById('f-stato').value==='In corso'&&prev.stato==='Da accettare'){
-      dataAccettazione=now;
-    }
+    if(nuovaND&&nuovaND!==vecchiaND)storico.push({ts:now,vecchia:vecchiaND,nuova:nuovaND,motivo:nuovoMot});
+    if(!prev.dataAccettazione&&document.getElementById('f-stato').value==='In corso'&&prev.stato==='Da accettare')dataAccettazione=now;
   }
-
   const o={
     desc,ric,des,
     mand:document.getElementById('f-mand').value.trim(),
@@ -999,77 +896,52 @@ async function save(){
     prio:document.getElementById('f-prio').value,
     stato:document.getElementById('f-stato').value,
     note:document.getElementById('f-note').value.trim(),
-    nd:nuovaND, mot:nuovoMot,
+    nd:nuovaND,mot:nuovoMot,
     pct:parseInt(document.getElementById('f-pct').value)||0,
-    storico, dataImmissione, dataAccettazione, emailLog
+    storico,dataImmissione,dataAccettazione,emailLog
   };
-
   const btn=document.getElementById('btn-save');
-  btn.textContent='Salvataggio...'; btn.disabled=true;
-
+  btn.textContent='Salvataggio...';btn.disabled=true;
   if(eid){Object.assign(acts.find(a=>a.id===eid),o);}
   else{acts.push({id:nid++,...o});}
-
-  render(); renderGantt(); closeModal();
+  render();renderGantt();closeModal();
   await saveData();
-
-  // Email automatiche
   const saved=eid?acts.find(a=>a.id===eid):acts[acts.length-1];
   if(saved){
-    if(isNew&&saved.emailRicevente){
-      await emailAssegnazione(saved);
-      await saveData();
-    } else if(!isNew&&nuovaND&&nuovaND!==vecchiaND){
-      await emailSpostamento(saved,vecchiaND,nuovaND,nuovoMot);
-      await saveData();
-    }
+    if(isNew&&saved.emailRicevente){await emailAssegnazione(saved);await saveData();}
+    else if(!isNew&&nuovaND&&nuovaND!==vecchiaND){await emailSpostamento(saved,vecchiaND,nuovaND,nuovoMot);await saveData();}
   }
-
-  // Toast KPI oltre 24h
   if(!isNew&&storico.length&&dataAccettazione){
     const lastS=storico[storico.length-1];
-    if(lastS&&lastS.ts-dataAccettazione>86400000){
-      toast('🟠 Oltre 24 ore: spostamento registrato dopo 24h dall\'accettazione');
-    }else{
-      toast('Attività aggiornata ✓');
-    }
-  }else{
-    toast(isNew?'Attività aggiunta ✓':'Attività aggiornata ✓');
-  }
-
-  btn.textContent='Salva attività'; btn.disabled=false;
+    if(lastS&&lastS.ts-dataAccettazione>86400000)toast('🟠 Oltre 24 ore: spostamento dopo 24h dall\'accettazione');
+    else toast('Attività aggiornata ✓');
+  }else{toast(isNew?'Attività aggiunta ✓':'Attività aggiornata ✓');}
+  btn.textContent='Salva attività';btn.disabled=false;
 }
 
 // ── RIFIUTO ───────────────────────────────────────────────────────────────────
-function openRifModal(id){
-  rifId=id;
-  document.getElementById('f-rif-motivo').value='';
-  document.getElementById('overlay-rif').classList.add('open');
-  setTimeout(()=>document.getElementById('f-rif-motivo').focus(),100);
-}
+function openRifModal(id){rifId=id;document.getElementById('f-rif-motivo').value='';document.getElementById('overlay-rif').classList.add('open');setTimeout(()=>document.getElementById('f-rif-motivo').focus(),100);}
 function closeRifModal(){document.getElementById('overlay-rif').classList.remove('open');}
 async function confirmRifiuto(){
   const motivo=document.getElementById('f-rif-motivo').value.trim();
   if(!motivo){alert('Inserisci il motivo del rifiuto');return;}
-  const a=acts.find(x=>x.id===rifId); if(!a) return;
-  a.stato='Rifiutata'; a.rifMotivo=motivo; a.rifData=Date.now(); a.pct=0;
-  closeRifModal(); render(); renderGantt();
-  await saveData();
-  toast('Attività rifiutata');
+  const a=acts.find(x=>x.id===rifId);if(!a)return;
+  a.stato='Rifiutata';a.rifMotivo=motivo;a.rifData=Date.now();a.pct=0;
+  closeRifModal();render();renderGantt();await saveData();toast('Attività rifiutata');
 }
 
 // ── CSV ───────────────────────────────────────────────────────────────────────
 function exportCSV(){
-  const h=['ID','Descrizione','Mandante','Email Mandante','Ricevente','Email Ricevente','Data Ric.','Data Des.','Nuova Data','Stato','Priorità','Avanz.%','Δ Giorni','Oltre 24h','Alert 24h','Note','Motivo Sposta.','Motivo Rifiuto','Data Inserimento','Data Accettazione','N.Spostamenti','Email inviate'];
+  const h=['ID','Descrizione','Mandante','Email Mandante','Ricevente','Email Ricevente','Data Ric.','Data Des.','Nuova Data','Stato','Priorità','Avanz.%','Δ Giorni','Entro 24h','Oltre 24h','Note','Motivo Sposta.','Motivo Rifiuto','Data Inserimento','Data Accettazione','N.Spostamenti','Email inviate'];
   const rows=acts.map(a=>{
     const d=delta(a);
     const dl=d===null?'':a.stato==='Completata'?(d===0?'In tempo':d>0?`+${d}gg ritardo`:`${Math.abs(d)}gg anticipo`):(d===0?'Scade oggi':d>0?`${d}gg rimasti`:`${Math.abs(d)}gg ritardo`);
-    return[a.id,`"${a.desc}"`,`"${a.mand||''}"`,`"${a.emailMandante||''}"`,`"${a.rice||''}"`,`"${a.emailRicevente||''}"`,fd(a.ric),fd(a.des),fd(a.nd),a.stato,a.prio,`${a.pct||0}%`,dl,hasOltre24h(a)?'SI':'NO',hasAlert24h(a)?'SI':'NO',`"${a.note}"`,`"${a.mot||''}"`,`"${a.rifMotivo||''}"`,fmtTs(a.dataImmissione),fmtTs(a.dataAccettazione),(a.storico||[]).length,(a.emailLog||[]).length];
+    return[a.id,`"${a.desc}"`,`"${a.mand||''}"`,`"${a.emailMandante||''}"`,`"${a.rice||''}"`,`"${a.emailRicevente||''}"`,fd(a.ric),fd(a.des),fd(a.nd),a.stato,a.prio,`${a.pct||0}%`,dl,hasEntro24h(a)?'SI':'NO',hasOltre24h(a)?'SI':'NO',`"${a.note}"`,`"${a.mot||''}"`,`"${a.rifMotivo||''}"`,fmtTs(a.dataImmissione),fmtTs(a.dataAccettazione),(a.storico||[]).length,(a.emailLog||[]).length];
   });
   const csv=[h,...rows].map(r=>r.join(';')).join('\n');
   const b=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
-  const u=URL.createObjectURL(b); const el=document.createElement('a');
-  el.href=u; el.download='attivita_'+iso()+'.csv'; el.click(); URL.revokeObjectURL(u);
+  const u=URL.createObjectURL(b);const el=document.createElement('a');
+  el.href=u;el.download='attivita_'+iso()+'.csv';el.click();URL.revokeObjectURL(u);
   toast('CSV esportato ✓');
 }
 
