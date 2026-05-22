@@ -382,28 +382,66 @@ function getISOWeek(d){
 }
 
 // ── EMAIL ─────────────────────────────────────────────────────────────────────
-async function sendEmail(templateId, params){
-  if(!params.email_to) return false;
+async function sendWorkflowEmail({to, subject, html}){
+  if(!to) return false;
   try{
-    await emailjs.send(EMAILJS_SERVICE_ID, templateId, params);
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE, {
+      email_to: to,
+      subject:  subject,
+      html_content: html
+    });
     return true;
   }catch(e){
-    console.error('EmailJS error:', e);
+    console.error('EmailJS error:',e);
     toast('⚠ Errore invio email');
     return false;
   }
 }
 
+function buildEmail({title, message, color='#2563eb', rows=[], footer=''}){
+  const rowsHtml=rows.map(r=>`
+    <tr>
+      <td style="padding:6px 0;font-size:13px;color:#6b7280;width:120px">${r.label}</td>
+      <td style="padding:6px 0;font-size:13px;color:#0f172a;font-weight:600">${r.value}</td>
+    </tr>`).join('');
+  return`<div style="font-family:Arial,sans-serif;padding:24px;background:#f4f5f7">
+    <div style="max-width:600px;margin:auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb">
+      <div style="background:${color};color:#fff;padding:18px 24px;font-size:18px;font-weight:700">${title}</div>
+      <div style="padding:24px">
+        <p style="font-size:14px;color:#374151;line-height:1.6;margin-bottom:20px">${message}</p>
+        <table style="width:100%;border-collapse:collapse;background:#f9fafb;border-radius:8px;padding:16px;border-left:4px solid ${color}">
+          ${rowsHtml}
+        </table>
+        ${footer?`<div style="margin-top:16px;font-size:12px;color:#6b7280;padding:12px;background:#f9fafb;border-radius:8px">${footer}</div>`:''}
+        <div style="margin-top:24px;padding:14px;background:#eff6ff;border-radius:8px;font-size:13px;color:#1d4ed8">
+          <strong>Azione richiesta:</strong> Apri la dashboard e gestisci l'attività.
+        </div>
+      </div>
+      <div style="padding:14px 24px;background:#f8fafc;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af;text-align:center">
+        Dashboard Monitoraggio Attività — MIBA S.r.l.
+      </div>
+    </div>
+  </div>`;
+}
+
 async function emailAssegnazione(a){
   if(!a.emailRicevente) return;
-  const ok = await sendEmail(EMAILJS_TPL_ASSEGNAZIONE,{
-    email_to:  a.emailRicevente,
-    ricevente: a.rice||a.emailRicevente,
-    titolo:    a.desc,
-    mandante:  a.mand||'—',
-    scadenza:  fd(a.des),
-    priorita:  a.prio,
-    note:      a.note||'—'
+  const html=buildEmail({
+    title:'📋 Nuova attività assegnata',
+    message:`Buongiorno ${a.rice||''},<br>ti è stata assegnata una nuova attività che richiede la tua <strong>accettazione</strong>.`,
+    color:'#2563eb',
+    rows:[
+      {label:'Attività',value:a.desc},
+      {label:'Mandante',value:a.mand||'—'},
+      {label:'Scadenza',value:fd(a.des)},
+      {label:'Priorità',value:a.prio},
+    ],
+    footer:a.note?`Note: ${a.note}`:''
+  });
+  const ok=await sendWorkflowEmail({
+    to:a.emailRicevente,
+    subject:`[Nuova attività] ${a.desc} — Priorità ${a.prio}`,
+    html
   });
   if(ok){
     a.emailLog=a.emailLog||[];
@@ -413,7 +451,64 @@ async function emailAssegnazione(a){
 }
 
 async function emailSpostamento(a, vecchiaData, nuovaData, motivo){
+  const msFromAcc=a.dataAccettazione?Date.now()-a.dataAccettazione:null;
+  const isOltre24=msFromAcc!==null&&msFromAcc>86400000;
+  const color=isOltre24?'#ea580c':'#7c3aed';
+  const alertBanner=isOltre24
+    ?`<div style="margin-top:16px;padding:12px;background:#fff7ed;border-radius:8px;border-left:4px solid #ea580c;font-size:13px;color:#c2410c"><strong>🟠 Attenzione:</strong> Spostamento registrato oltre 24h dall'accettazione.</div>`
+    :`<div style="margin-top:16px;padding:12px;background:#f5f3ff;border-radius:8px;border-left:4px solid #7c3aed;font-size:13px;color:#7c3aed"><strong>⚡ Info:</strong> Spostamento registrato entro 24h dall'accettazione.</div>`;
+
   // Email al ricevente
+  if(a.emailRicevente){
+    const html=buildEmail({
+      title:'📅 Attività spostata',
+      message:`Buongiorno ${a.rice||''},<br>la scadenza dell'attività assegnata è stata <strong>modificata</strong>.`,
+      color,
+      rows:[
+        {label:'Attività',value:a.desc},
+        {label:'Data precedente',value:fd(vecchiaData)},
+        {label:'Nuova scadenza',value:fd(nuovaData)},
+        {label:'Motivo',value:motivo||'Non specificato'},
+      ],
+      footer:alertBanner
+    });
+    const ok=await sendWorkflowEmail({
+      to:a.emailRicevente,
+      subject:`[Attività spostata] ${a.desc} — nuova scadenza ${fd(nuovaData)}`,
+      html
+    });
+    if(ok){
+      a.emailLog=a.emailLog||[];
+      a.emailLog.push({tipo:'spostamento',ts:Date.now(),da:vecchiaData,a:nuovaData});
+    }
+  }
+
+  // Email al mandante
+  if(a.emailMandante){
+    const html=buildEmail({
+      title:'📅 Attività che hai assegnato è stata spostata',
+      message:`Buongiorno ${a.mand||''},<br>l'attività che hai assegnato ha una nuova scadenza.`,
+      color,
+      rows:[
+        {label:'Attività',value:a.desc},
+        {label:'Ricevente',value:a.rice||'—'},
+        {label:'Data precedente',value:fd(vecchiaData)},
+        {label:'Nuova scadenza',value:fd(nuovaData)},
+        {label:'Motivo',value:motivo||'Non specificato'},
+      ],
+      footer:alertBanner
+    });
+    await sendWorkflowEmail({
+      to:a.emailMandante,
+      subject:`[Notifica spostamento] ${a.desc} — nuova scadenza ${fd(nuovaData)}`,
+      html
+    });
+  }
+
+  if(a.emailRicevente||a.emailMandante){
+    toast('📧 Notifiche spostamento inviate'+(isOltre24?' 🟠 oltre 24h':''));
+  }
+}
   if(a.emailRicevente){
     const ok = await sendEmail(EMAILJS_TPL_SPOSTAMENTO,{
       email_to:     a.emailRicevente,
