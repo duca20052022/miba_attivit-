@@ -635,8 +635,8 @@ function renderStats(){
     <div class="stat-card acc-red"><div class="lbl">In ritardo</div><div class="val v-red">${ir}</div><div class="sub">oltre scadenza</div></div>
     <div class="stat-card acc-green"><div class="lbl">Completate</div><div class="val v-green">${co}</div><div class="sub">chiuse</div></div>
     <div class="stat-card acc-rose"><div class="lbl">Rifiutate</div><div class="val v-rose">${rif}</div><div class="sub">non accettate</div></div>
-    <div class="stat-card acc-orange"><div class="lbl">Oltre 24 ore</div><div class="val v-orange">${kpi}</div><div class="sub">spostate post acc.</div></div>
-    <div class="stat-card acc-amber"><div class="lbl">Alert 24h</div><div class="val v-amber">${alrt}</div><div class="sub">sposta presto+tardive</div></div>
+    <div class="stat-card acc-amber"><div class="lbl">Entro 24 ore</div><div class="val v-amber">${acts.filter(a=>a.storico&&a.storico.length&&a.dataAccettazione&&a.storico.some(s=>s.ts-a.dataAccettazione>0&&s.ts-a.dataAccettazione<=86400000)).length}</div><div class="sub">spostate in tempo</div></div>
+    <div class="stat-card acc-orange"><div class="lbl">Oltre 24 ore</div><div class="val v-orange">${kpi}</div><div class="sub">spostate in ritardo</div></div>
     <div class="stat-card acc-blue"><div class="lbl">Avanz. medio</div><div class="val v-blue">${avgPct}%</div><div class="sub">attività attive</div></div>
     ${spostCard}`;
 
