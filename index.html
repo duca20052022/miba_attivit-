@@ -407,7 +407,7 @@ function buildEmail({title, message, color='#2563eb', rows=[], footer=''}){
     </tr>`).join('');
   return`<div style="font-family:Arial,sans-serif;padding:24px;background:#f4f5f7">
     <div style="max-width:600px;margin:auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 4px 16px rgba(0,0,0,.08)">
-      <div style="background:${color};color:#fff;padding:20px 24px;font-size:18px;font-weight:700;letter-spacing:-.3px">${title}</div>
+      <div style="background:${color};color:#fff;padding:20px 24px;font-size:18px;font-weight:700">${title}</div>
       <div style="padding:24px">
         <p style="font-size:14px;color:#374151;line-height:1.6;margin-bottom:20px">${message}</p>
         <table style="width:100%;border-collapse:collapse;background:#f9fafb;border-radius:8px;padding:16px;border-left:4px solid ${color};margin-bottom:16px">
@@ -415,7 +415,7 @@ function buildEmail({title, message, color='#2563eb', rows=[], footer=''}){
         </table>
         ${footer?`<div style="margin-bottom:16px;padding:12px 16px;border-radius:8px;font-size:13px">${footer}</div>`:''}
         <div style="padding:14px 16px;background:#eff6ff;border-radius:8px;font-size:13px;color:#1d4ed8;border-left:3px solid #2563eb">
-          <strong>Azione richiesta:</strong> Apri la dashboard e gestisci l'attività al seguente link:<br>
+          <strong>Apri la dashboard:</strong><br>
           <a href="https://duca20052022.github.io/miba_attivit-/" style="color:#2563eb;font-weight:600">Dashboard MIBA →</a>
         </div>
       </div>
@@ -433,11 +433,11 @@ async function emailAssegnazione(a){
     message:`Buongiorno <strong>${a.rice||''}</strong>,<br>ti è stata assegnata una nuova attività che richiede la tua <strong>accettazione o rifiuto</strong>.`,
     color:'#2563eb',
     rows:[
-      {label:'Attività',   value:a.desc},
-      {label:'Mandante',   value:a.mand||'—'},
-      {label:'Scadenza',   value:fd(a.des)},
-      {label:'Priorità',   value:a.prio},
-      {label:'Note',       value:a.note||'—'}
+      {label:'Attività', value:a.desc},
+      {label:'Mandante', value:a.mand||'—'},
+      {label:'Scadenza', value:fd(a.des)},
+      {label:'Priorità', value:a.prio},
+      {label:'Note',     value:a.note||'—'}
     ]
   });
   const ok=await sendWorkflowEmail({
@@ -453,18 +453,19 @@ async function emailAssegnazione(a){
 }
 
 async function emailSpostamento(a, vecchiaData, nuovaData, motivo){
-  const msFromAcc=a.dataAccettazione?Date.now()-a.dataAccettazione:null;
-  const isOltre24=msFromAcc!==null&&msFromAcc>86400000;
+  const riferimento=a.dataAccettazione||a.dataImmissione;
+  const msFromRef=riferimento?Date.now()-riferimento:null;
+  const isOltre24=msFromRef!==null&&msFromRef>86400000;
   const color=isOltre24?'#ea580c':'#7c3aed';
+  const usedAcc=!!a.dataAccettazione;
   const alertBanner=isOltre24
-    ?`<div style="padding:12px 16px;background:#fff7ed;border-radius:8px;border-left:3px solid #ea580c;font-size:13px;color:#c2410c"><strong>🟠 Attenzione:</strong> Spostamento registrato <strong>oltre 24h</strong> dall'accettazione.</div>`
-    :`<div style="padding:12px 16px;background:#f5f3ff;border-radius:8px;border-left:3px solid #7c3aed;font-size:13px;color:#7c3aed"><strong>⚡ Info:</strong> Spostamento registrato <strong>entro 24h</strong> dall'accettazione.</div>`;
+    ?`<div style="padding:12px 16px;background:#fff7ed;border-radius:8px;border-left:3px solid #ea580c;font-size:13px;color:#c2410c"><strong>🟠 Attenzione:</strong> Spostamento oltre 24h ${usedAcc?"dall'accettazione":"dalla creazione"}.</div>`
+    :`<div style="padding:12px 16px;background:#f5f3ff;border-radius:8px;border-left:3px solid #7c3aed;font-size:13px;color:#7c3aed"><strong>⚡ Info:</strong> Spostamento entro 24h ${usedAcc?"dall'accettazione":"dalla creazione"}.</div>`;
 
-  // Email al ricevente
   if(a.emailRicevente){
     const html=buildEmail({
       title:'📅 Scadenza attività modificata',
-      message:`Buongiorno <strong>${a.rice||''}</strong>,<br>la scadenza dell'attività che ti è stata assegnata è stata <strong>modificata</strong>.`,
+      message:`Buongiorno <strong>${a.rice||''}</strong>,<br>la scadenza dell'attività è stata <strong>modificata</strong>.`,
       color,
       rows:[
         {label:'Attività',        value:a.desc},
@@ -485,7 +486,6 @@ async function emailSpostamento(a, vecchiaData, nuovaData, motivo){
     }
   }
 
-  // Email al mandante
   if(a.emailMandante){
     const html=buildEmail({
       title:'📅 Attività assegnata spostata',
@@ -510,6 +510,27 @@ async function emailSpostamento(a, vecchiaData, nuovaData, motivo){
   if(a.emailRicevente||a.emailMandante){
     toast('📧 Notifiche spostamento inviate'+(isOltre24?' 🟠':''));
   }
+}
+
+async function emailRifiuto(a, motivo){
+  if(!a.emailMandante) return;
+  const html=buildEmail({
+    title:'❌ Attività rifiutata',
+    message:`Buongiorno <strong>${a.mand||''}</strong>,<br>l'attività che hai assegnato è stata <strong>rifiutata</strong> dal ricevente.`,
+    color:'#e11d48',
+    rows:[
+      {label:'Attività',  value:a.desc},
+      {label:'Ricevente', value:a.rice||'—'},
+      {label:'Motivo',    value:motivo},
+      {label:'Data',      value:fmtTs(Date.now())}
+    ]
+  });
+  const ok=await sendWorkflowEmail({
+    to:      a.emailMandante,
+    subject: `[Attività rifiutata] ${a.desc}`,
+    html
+  });
+  if(ok) toast('📧 Notifica rifiuto inviata al mandante');
 }
 
 // ── API JSONBIN ───────────────────────────────────────────────────────────────
@@ -580,12 +601,16 @@ function delta(a){
 
 // ── KPI ───────────────────────────────────────────────────────────────────────
 function hasOltre24h(a){
-  if(!a.dataAccettazione||!a.storico||!a.storico.length) return false;
-  return a.storico.some(s=>s.ts-a.dataAccettazione>86400000);
+  if(!a.storico||!a.storico.length) return false;
+  const rif=a.dataAccettazione||a.dataImmissione;
+  if(!rif) return false;
+  return a.storico.some(s=>s.ts-rif>86400000);
 }
 function hasEntro24h(a){
-  if(!a.dataAccettazione||!a.storico||!a.storico.length) return false;
-  return a.storico.some(s=>s.ts-a.dataAccettazione>0&&s.ts-a.dataAccettazione<=86400000);
+  if(!a.storico||!a.storico.length) return false;
+  const rif=a.dataAccettazione||a.dataImmissione;
+  if(!rif) return false;
+  return a.storico.some(s=>s.ts-rif>0&&s.ts-rif<=86400000);
 }
 function hasAlert24h(a){
   if(!a.dataImmissione||!a.storico||!a.storico.length) return false;
@@ -597,20 +622,29 @@ function hasAlert24h(a){
   });
 }
 function kpiLabel(s,a){
-  if(!a.dataAccettazione) return '';
-  const ms=s.ts-a.dataAccettazione;
-  if(ms>86400000) return ' 🟠 oltre 24h';
-  if(ms>=0){const ref=pdt(a.nd||a.des);if(ref&&today>ref)return ' ⚡ <24h+ritardo';return ' ✅ <24h+puntuale';}
+  const rif=a.dataAccettazione||a.dataImmissione;
+  if(!rif) return '';
+  const ms=s.ts-rif;
+  const label=a.dataAccettazione?"dall'accettazione":"dalla creazione";
+  if(ms>86400000) return ` 🟠 oltre 24h ${label}`;
+  if(ms>=0){const ref=pdt(a.nd||a.des);if(ref&&today>ref)return ` ⚡ <24h+ritardo`;return ` ✅ <24h+puntuale`;}
   return '';
 }
+
+// Ultimo spostamento con fallback su dataImmissione
 function getUltimoSpostamento(){
   const spostati=acts.filter(a=>a.storico&&a.storico.length);
   if(!spostati.length) return null;
   let uAct=null,uShift=null;
-  for(const a of spostati){const s=a.storico[a.storico.length-1];if(!uShift||s.ts>uShift.ts){uShift=s;uAct=a;}}
+  for(const a of spostati){
+    const s=a.storico[a.storico.length-1];
+    if(!uShift||s.ts>uShift.ts){uShift=s;uAct=a;}
+  }
   if(!uAct||!uShift) return null;
-  const msFromAcc=uAct.dataAccettazione?uShift.ts-uAct.dataAccettazione:null;
-  return{act:uAct,shift:uShift,msFromAcc};
+  const riferimento=uAct.dataAccettazione||uAct.dataImmissione;
+  const msFromRef=riferimento?uShift.ts-riferimento:null;
+  const usedAcc=!!uAct.dataAccettazione;
+  return{act:uAct,shift:uShift,msFromRef,usedAcc};
 }
 
 // ── PROGRESS ──────────────────────────────────────────────────────────────────
@@ -650,13 +684,23 @@ function renderStats(){
   const us=getUltimoSpostamento();
   let spostCard='';
   if(us){
-    const ms=us.msFromAcc;
+    const ms=us.msFromRef;
+    const subLabel=us.usedAcc?"dall'accettazione":"dalla creazione";
     let label,col,vcol;
-    if(ms===null){label='Non ancora accettata';col='acc-gray';vcol='#9ca3af';}
-    else if(ms<=0){label='Pre-accettazione';col='acc-gray';vcol='#9ca3af';}
-    else if(ms<86400000){label=`⚡ Entro 24h<br><small style="font-weight:400;font-size:11px">${fmtDur(ms)}</small>`;col='acc-amber';vcol='#d97706';}
-    else{label=`🟠 Oltre 24h<br><small style="font-weight:400;font-size:11px">${fmtDur(ms)}</small>`;col='acc-orange';vcol='#ea580c';}
-    spostCard=`<div class="stat-card ${col}"><div class="lbl">Ultimo spostamento</div><div class="val" style="font-size:13px;font-weight:700;color:${vcol};line-height:1.5">${label}</div><div class="sub">${esc(us.act.desc.slice(0,22))}</div></div>`;
+    if(ms===null){label='Nessun riferimento';col='acc-gray';vcol='#9ca3af';}
+    else if(ms<=0){label='Prima della creazione';col='acc-gray';vcol='#9ca3af';}
+    else if(ms<86400000){
+      label=`⚡ Entro 24h<br><small style="font-weight:400;font-size:11px">${fmtDur(ms)} ${subLabel}</small>`;
+      col='acc-amber';vcol='#d97706';
+    }else{
+      label=`🟠 Oltre 24h<br><small style="font-weight:400;font-size:11px">${fmtDur(ms)} ${subLabel}</small>`;
+      col='acc-orange';vcol='#ea580c';
+    }
+    spostCard=`<div class="stat-card ${col}">
+      <div class="lbl">Ultimo spostamento</div>
+      <div class="val" style="font-size:13px;font-weight:700;color:${vcol};line-height:1.5">${label}</div>
+      <div class="sub">${esc(us.act.desc.slice(0,20))}</div>
+    </div>`;
   }
 
   document.getElementById('stats-row').innerHTML=`
@@ -911,9 +955,10 @@ async function save(){
     if(isNew&&saved.emailRicevente){await emailAssegnazione(saved);await saveData();}
     else if(!isNew&&nuovaND&&nuovaND!==vecchiaND){await emailSpostamento(saved,vecchiaND,nuovaND,nuovoMot);await saveData();}
   }
-  if(!isNew&&storico.length&&dataAccettazione){
+  if(!isNew&&storico.length){
+    const rif=o.dataAccettazione||o.dataImmissione;
     const lastS=storico[storico.length-1];
-    if(lastS&&lastS.ts-dataAccettazione>86400000)toast('🟠 Oltre 24 ore: spostamento dopo 24h dall\'accettazione');
+    if(lastS&&rif&&lastS.ts-rif>86400000)toast('🟠 Oltre 24 ore: spostamento dopo 24h');
     else toast('Attività aggiornata ✓');
   }else{toast(isNew?'Attività aggiunta ✓':'Attività aggiornata ✓');}
   btn.textContent='Salva attività';btn.disabled=false;
@@ -922,12 +967,18 @@ async function save(){
 // ── RIFIUTO ───────────────────────────────────────────────────────────────────
 function openRifModal(id){rifId=id;document.getElementById('f-rif-motivo').value='';document.getElementById('overlay-rif').classList.add('open');setTimeout(()=>document.getElementById('f-rif-motivo').focus(),100);}
 function closeRifModal(){document.getElementById('overlay-rif').classList.remove('open');}
+
 async function confirmRifiuto(){
   const motivo=document.getElementById('f-rif-motivo').value.trim();
   if(!motivo){alert('Inserisci il motivo del rifiuto');return;}
   const a=acts.find(x=>x.id===rifId);if(!a)return;
   a.stato='Rifiutata';a.rifMotivo=motivo;a.rifData=Date.now();a.pct=0;
-  closeRifModal();render();renderGantt();await saveData();toast('Attività rifiutata');
+  closeRifModal();render();renderGantt();
+  await saveData();
+  toast('Attività rifiutata');
+  // Email al mandante
+  await emailRifiuto(a,motivo);
+  await saveData();
 }
 
 // ── CSV ───────────────────────────────────────────────────────────────────────
